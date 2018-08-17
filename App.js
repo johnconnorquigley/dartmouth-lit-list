@@ -158,7 +158,7 @@ class HomeScreen extends React.Component {
       )
     } else {
       return(
-        <View style={[styles.container, {backgroundColor: 'pink'}]}>
+        <View style={[styles.container, {backgroundColor: '#fff'}]}>
           <View style={{flex: 10}}>
             <FlatList
               data={this.state.eventList}
