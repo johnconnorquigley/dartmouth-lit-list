@@ -80,7 +80,7 @@ class HomeScreen extends React.Component {
   }
 
   static navigationOptions = {
-   title: 'Greek Events',
+   title: 'This Week in Greek',
    headerStyle: {
       backgroundColor: '#00693e',
     },
