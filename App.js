@@ -7,7 +7,9 @@ import {
   View,
   Text,
   Button,
-  Image
+  Image,
+  FlatList,
+  TouchableHighlight
 } from 'react-native';
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import {AzureInstance, AzureLoginView} from 'react-native-azure-ad-2';
@@ -70,9 +72,9 @@ class HomeScreen extends React.Component {
     super(props);
     this.state = {
       isLoading: true,
+      eventList: undefined,
     }
   }
-
 
   static navigationOptions = {
    title: 'Greek Events',
@@ -87,7 +89,7 @@ class HomeScreen extends React.Component {
 
   getMailAsync = async () => {
       const userToken = await AsyncStorage.getItem('userToken');
-      fetch("https://graph.microsoft.com/v1.0/me/messages?top=9000", {
+      fetch("https://graph.microsoft.com/v1.0/me/messages?top=100", {
                       headers: {
                           'Authorization': "Bearer " + userToken,
                       }
@@ -98,11 +100,13 @@ class HomeScreen extends React.Component {
                   this.getResults(response);
                   return response
               }).catch(err => {
+                  this._signOutAsync();
                   // incase of error reject promise
                   throw new Error(err);
               });
   }
 
+  //get the results of the response
   getResults(response) {
     //get array of emails
     var values = response.value;
@@ -110,47 +114,98 @@ class HomeScreen extends React.Component {
     //get emails from last 5 days, could allow user to specify date range
     var today = new Date();
     var startDate = new Date(today.getTime() - 5*24*60*60*1000);
-    // function filterByDate(value, index, array){
-    //   if(Date.parse(value.receivedDateTime) != undefined) {
-    //     return Date.parse(value.receivedDateTime) >= startDate;
-    //   }
-    //   return false;
-    // }
-    //values = values.filter(filterByDate);
+    function filterByDate(value, index, array){
+      if(Date.parse(value.receivedDateTime) != undefined) {
+        return Date.parse(value.receivedDateTime) >= startDate;
+      }
+      return false;
+    }
+    values = values.filter(filterByDate);
 
     //filter by fraternity
     function filterByFrat(value, index, array){
         return value.from.emailAddress.address != undefined && GREEKS.indexOf(value.from.emailAddress.address) >= 0;
     }
     values = values.filter(filterByFrat);
-    for(var i =0; i < values.length; i++) {
-      console.log("Sender:" + values[i].from.emailAddress.address );
-      console.log("Subject:" + values[i].subject);
-    }
     this.setState(previousState => {
-        return { isLoading: !previousState.isLoading };
+        return { isLoading: !previousState.isLoading, eventList: values};
       });
-    console.log("finished");
-
   }
 
+    //stuff to render the list
+    _renderItem = ({item}) => (
+     <MyListItem
+       item={item}
+       // onPressItem={this._onPressItem}
+       // selected={!!this.state.selected.get(item.id)}
+       title={item.from.emailAddress.address}
+     />
+   );
+
+   _keyExtractor = (item, index) => item.id;
+
+   //render the component
   render(){
-    this.getMailAsync();
-    //TODO: spinner 
-    let spinner = this.state.isShowingText ? this.props.text : ' ';
-    return(
-      <View>
-        <Text>Home Screen</Text>
-        <Button title="Actually, sign me out :)" onPress={this._signOutAsync} />
-        <Text></Text>
-      </View>
-    )
+    if(this.state.isLoading) {
+      this.getMailAsync();
+      return(
+        <View style={[styles.container, {backgroundColor: '#fff', justifyContent: 'center'}]}>
+          <ActivityIndicator size="large" color="#00693e"/>
+        </View>
+      )
+    } else {
+      return(
+        <View style={[styles.container, {backgroundColor: '#fff'}]}>
+          <View style={{flex: 10}}>
+            <FlatList
+              data={this.state.eventList}
+              keyExtractor={this._keyExtractor}
+              renderItem={this._renderItem}
+            />
+          </View>
+
+          <View style={{flex: 1, backgroundColor: '#00693e'}}>
+            <Button title="Sign Out" color='#fff' onPress={this._signOutAsync} />
+          </View>
+        </View>
+      )
+    }
   }
 
   _signOutAsync = async () => {
     await AsyncStorage.clear();
     this.props.navigation.navigate('Auth');
   };
+}
+
+
+/************************ List Item **********************************/
+class MyListItem extends React.PureComponent {
+  // _onPress = () => {
+  //   this.props.onPressItem(this.props.id);
+  // };
+
+  render() {
+    const item = this.props.item;
+    console.log(item);
+    return (
+      <TouchableHighlight
+          // onPress={this._onPress}
+          underlayColor='#dddddd'>
+          <View>
+            <View style={styles.rowContainer}>
+              {/* <Image style={styles.thumb} source={{uri: this.state.url.concat(item.iconUrl)}}/> */}
+              <View style={styles.textContainer}>
+
+                {/* <Text style={styles.name}>{item.from.emailAddress.address }</Text>
+                <Text >{item.subject}</Text> */}
+              </View>
+            </View>
+            <View style={styles.separator}/>
+          </View>
+        </TouchableHighlight>
+    );
+  }
 }
 
 /************************ Azure Stuff *********************/
@@ -229,12 +284,34 @@ export default createSwitchNavigator(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // alignItems: 'center',
+    // justifyContent: 'center',
     backgroundColor: '#00693e'
   },
-  fill: {
-    flex: 1,
-    backgroundColor: '#00693e'
-  }
+
+  thumb: {
+    width: 80,
+    height: 80,
+    marginRight: 10
+  },
+  textContainer: {
+    flex: 1
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#dddddd'
+  },
+  name: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: '#48BBEC'
+  },
+  title: {
+    fontSize: 20,
+    color: '#656565'
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    padding: 10
+  },
 });
