@@ -9,10 +9,13 @@ import {
   Button,
   Image,
   FlatList,
-  TouchableHighlight
+  TouchableHighlight,
+  ScrollView,
+  WebView
 } from 'react-native';
 import { createSwitchNavigator, createStackNavigator } from 'react-navigation';
 import {AzureInstance, AzureLoginView} from 'react-native-azure-ad-2';
+
 
 /**************************** LOADING SCREEN ***********/
 class AuthLoadingScreen extends React.Component {
@@ -89,7 +92,7 @@ class HomeScreen extends React.Component {
 
   getMailAsync = async () => {
       const userToken = await AsyncStorage.getItem('userToken');
-      fetch("https://graph.microsoft.com/v1.0/me/messages?top=100", {
+      fetch("https://graph.microsoft.com/v1.0/me/messages?top=900", {
                       headers: {
                           'Authorization': "Bearer " + userToken,
                       }
@@ -120,7 +123,7 @@ class HomeScreen extends React.Component {
       }
       return false;
     }
-    values = values.filter(filterByDate);
+    // values = values.filter(filterByDate);
 
     //filter by fraternity
     function filterByFrat(value, index, array){
@@ -133,10 +136,10 @@ class HomeScreen extends React.Component {
   }
 
     //stuff to render the list
-    _renderItem = ({item}) => (
+  _renderItem = ({item}) => (
      <MyListItem
        item={item}
-       // onPressItem={this._onPressItem}
+       navigation = {this.props.navigation}
        // selected={!!this.state.selected.get(item.id)}
        title={item.from.emailAddress.address}
      />
@@ -155,7 +158,7 @@ class HomeScreen extends React.Component {
       )
     } else {
       return(
-        <View style={[styles.container, {backgroundColor: '#fff'}]}>
+        <View style={[styles.container, {backgroundColor: 'pink'}]}>
           <View style={{flex: 10}}>
             <FlatList
               data={this.state.eventList}
@@ -163,7 +166,6 @@ class HomeScreen extends React.Component {
               renderItem={this._renderItem}
             />
           </View>
-
           <View style={{flex: 1, backgroundColor: '#00693e'}}>
             <Button title="Sign Out" color='#fff' onPress={this._signOutAsync} />
           </View>
@@ -179,26 +181,53 @@ class HomeScreen extends React.Component {
 }
 
 
+/**************** view the email content ***********************/
+class MessageScreen extends React.Component {
+
+  static navigationOptions = ({navigation}) => {
+   return {title: navigation.getParam('subject', 'Message'),
+   headerStyle: {
+      backgroundColor: '#00693e',
+    },
+    headerTintColor: '#fff',
+    headerTitleStyle: {
+      fontWeight: 'bold',
+    },}
+  };
+
+  render() {
+    const html = this.props.navigation.getParam('content','no');
+    return(
+        <WebView source={{html, baseUrl: 'web/'}} mixedContentMode='always' style={{ flex: 1 }}/>
+
+
+
+    )
+  }
+}
+
 /************************ List Item **********************************/
 class MyListItem extends React.PureComponent {
-  // _onPress = () => {
-  //   this.props.onPressItem(this.props.id);
-  // };
+  _onPress = () => {
+    console.log(this.props.item);
+    this.props.navigation.push('Message', {
+      subject: this.props.item.subject,
+      sender: this.props.item.from.emailAddress.name,
+      content: this.props.item.body.content
+    });
+  }
 
   render() {
     const item = this.props.item;
-    console.log(item);
     return (
       <TouchableHighlight
-          // onPress={this._onPress}
+          onPress={this._onPress}
           underlayColor='#dddddd'>
           <View>
-            <View style={styles.rowContainer}>
-              {/* <Image style={styles.thumb} source={{uri: this.state.url.concat(item.iconUrl)}}/> */}
+            <View style={[styles.rowContainer, {backgroundColor: '#fff'}]}>
               <View style={styles.textContainer}>
-
-                {/* <Text style={styles.name}>{item.from.emailAddress.address }</Text>
-                <Text >{item.subject}</Text> */}
+                <Text style={styles.name}>{item.subject }</Text>
+                <Text >{item.from.emailAddress.name}</Text>
               </View>
             </View>
             <View style={styles.separator}/>
@@ -265,7 +294,7 @@ class azureAuth extends React.Component {
 }
 
 /* Main Navigation */
-const AppStack = createStackNavigator({ Home: HomeScreen });
+const AppStack = createStackNavigator({ Home: HomeScreen, Message: MessageScreen});
 const AuthStack = createStackNavigator({ SignIn: azureAuth });
 
 export default createSwitchNavigator(
