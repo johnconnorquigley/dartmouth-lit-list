@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "dartmouth-lit-list",
-    "description": "This project is really great.",
-    "slug": "dartmouth-lit-list",
+    "name": "Keggy's Week in Greek",
+    "description": "This is a project I built to learn and explore react native. A user signs in using their Dartmouth email then the app displays all the greek emails from the current week.",
+    "slug": "keggys-week-in-greek",
     "privacy": "public",
     "sdkVersion": "29.0.0",
     "platforms": ["ios", "android"],
