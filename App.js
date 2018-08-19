@@ -54,7 +54,7 @@ const GREEKS = [
   "Alpha.Chi.Alpha@DARTMOUTH.EDU",
   "Sigma.Nu@DARTMOUTH.EDU",
   "Sigma.Phi.Epsilon@DARTMOUTH.EDU",
-  "Zeta.Psi.Upsilon@DARTMOUTH.EDU",
+  "Zeta.Psi@DARTMOUTH.EDU",
   "bones.gate@DARTMOUTH.EDU",
   "phi.delta.alpha@dartmouth.edu",
   "chi.heorot@dartmouth.edu",
@@ -67,6 +67,8 @@ const GREEKS = [
   "kappa.delta.epsilon@dartmouth.edu",
   "kappa.kappa.gamma@dartmouth.edu",
   "sigma.delta@dartmouth.edu",
+  "phi.tau@dartmouth.edu",
+  "aplha.delta@dartmouth.edu",
   "Interfraternity.Council@DARTMOUTH.EDU"
 ];
 
@@ -92,7 +94,10 @@ class HomeScreen extends React.Component {
 
   getMailAsync = async () => {
       const userToken = await AsyncStorage.getItem('userToken');
-      fetch("https://graph.microsoft.com/v1.0/me/messages?top=900", {
+      var beginningOfWeek = this.getMonday().toISOString();
+      var request = "https://graph.microsoft.com/v1.0/me/messages?$top=400&$filter=SentDateTime ge " + beginningOfWeek;
+      console.log(request);
+      fetch(request, {
                       headers: {
                           'Authorization': "Bearer " + userToken,
                       }
@@ -114,17 +119,6 @@ class HomeScreen extends React.Component {
     //get array of emails
     var values = response.value;
 
-    //get emails from last 5 days, could allow user to specify date range
-    var today = new Date();
-    var startDate = new Date(today.getTime() - 5*24*60*60*1000);
-    function filterByDate(value, index, array){
-      if(Date.parse(value.receivedDateTime) != undefined) {
-        return Date.parse(value.receivedDateTime) >= startDate;
-      }
-      return false;
-    }
-    // values = values.filter(filterByDate);
-
     //filter by fraternity
     function filterByFrat(value, index, array){
         return value.from.emailAddress.address != undefined && GREEKS.indexOf(value.from.emailAddress.address) >= 0;
@@ -133,6 +127,12 @@ class HomeScreen extends React.Component {
     this.setState(previousState => {
         return { isLoading: !previousState.isLoading, eventList: values};
       });
+  }
+
+  getMonday() {
+    var today = new Date();
+    var day = today.getDay(), diff = today.getDate() - day + (day == 0 ? -6:1);
+    return new Date(today.setDate(diff));
   }
 
     //stuff to render the list
@@ -158,7 +158,7 @@ class HomeScreen extends React.Component {
       )
     } else {
       return(
-        <View style={[styles.container, {backgroundColor: '#fff'}]}>
+        <View style={[styles.container, {backgroundColor: '#fff', justifyContent: 'center'}]}>
           <View style={{flex: 10}}>
             <FlatList
               data={this.state.eventList}
@@ -185,7 +185,7 @@ class HomeScreen extends React.Component {
 class MessageScreen extends React.Component {
 
   static navigationOptions = ({navigation}) => {
-   return {title: navigation.getParam('subject', 'Message'),
+   return {title: navigation.getParam('sender', 'Message'),
    headerStyle: {
       backgroundColor: '#00693e',
     },
@@ -196,10 +196,13 @@ class MessageScreen extends React.Component {
   };
 
   render() {
-    const html = this.props.navigation.getParam('content','no');
+    const html = this.props.navigation.getParam('content',"Content Can't Display");
     return(
-        <WebView source={{html, baseUrl: 'web/'}} mixedContentMode='always' style={{ flex: 1 }}/>
 
+        <View style={[styles.container, {backgroundColor: '#fff', flexDirection: `column`}]}>
+          <Text style={[styles.name, {textAlign: 'center'}]}>{this.props.navigation.getParam('subject','UNKNOWN')}</Text>
+            <WebView source={{html, baseUrl: 'web/'}} mixedContentMode='always' style={{ flex: 9 }}/>
+        </View>
 
 
     )
@@ -313,8 +316,6 @@ export default createSwitchNavigator(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // alignItems: 'center',
-    // justifyContent: 'center',
     backgroundColor: '#00693e'
   },
 
