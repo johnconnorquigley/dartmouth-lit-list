@@ -201,7 +201,7 @@ class MessageScreen extends React.Component {
 
         <View style={[styles.container, {backgroundColor: '#fff', flexDirection: `column`}]}>
           <Text style={[styles.name, {textAlign: 'center'}]}>{this.props.navigation.getParam('subject','UNKNOWN')}</Text>
-            <WebView source={{html, baseUrl: 'web/'}} mixedContentMode='always' style={{ flex: 9 }}/>
+          <WebView source={{html, baseUrl: 'web/'}} mixedContentMode='always' style={{ flex: 9 }}/>
         </View>
 
 
