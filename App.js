@@ -47,15 +47,15 @@ class AuthLoadingScreen extends React.Component {
 
 /******************************* Home Screen *********************************/
 const GREEKS = [
-  "Gamma.Delta.Chi@DARTMOUTH.EDU",
-  "Beta.Alpha.Omega@DARTMOUTH.EDU",
-  "Kappa.Kappa.Kappa@DARTMOUTH.EDU",
-  "Chi.Gam.Epsilon@DARTMOUTH.EDU",
-  "Alpha.Chi.Alpha@DARTMOUTH.EDU",
-  "Sigma.Nu@DARTMOUTH.EDU",
-  "Sigma.Phi.Epsilon@DARTMOUTH.EDU",
-  "Zeta.Psi@DARTMOUTH.EDU",
-  "bones.gate@DARTMOUTH.EDU",
+  "gamma.delta.chi@dartmouth.eduu",
+  "beta.alpha.omega@dartmouth.edu",
+  "kappa.kappa.kappa@dartmouth.edu",
+  "chi.gamma.epsilon@dartmouth.edu",
+  "alpha.chi.alpha@dartmouth.edu",
+  "sigmae.nu@dartmouth.edu",
+  "sigma.shi.epsilon@dartmouth.edu",
+  "zeta.psi@dartmouth.edu",
+  "bones.gate@dartmouth.edu",
   "phi.delta.alpha@dartmouth.edu",
   "chi.heorot@dartmouth.edu",
   "theta.delta.chi@dartmouth.edu",
@@ -69,7 +69,7 @@ const GREEKS = [
   "sigma.delta@dartmouth.edu",
   "phi.tau@dartmouth.edu",
   "aplha.delta@dartmouth.edu",
-  "Interfraternity.Council@DARTMOUTH.EDU"
+  "interfraternity.council@dartmouth.edu"
 ];
 
 class HomeScreen extends React.Component {
@@ -121,7 +121,8 @@ class HomeScreen extends React.Component {
 
     //filter by fraternity
     function filterByFrat(value, index, array){
-        return value.from.emailAddress.address != undefined && GREEKS.indexOf(value.from.emailAddress.address) >= 0;
+
+        return value.from != undefined && value.from.emailAddress != undefined && value.from.emailAddress.address != undefined && GREEKS.indexOf(value.from.emailAddress.address.toLowerCase()) >= 0;
     }
     values = values.filter(filterByFrat);
     this.setState(previousState => {
